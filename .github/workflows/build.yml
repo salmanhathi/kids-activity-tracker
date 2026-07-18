@@ -28,23 +28,41 @@ jobs:
       - name: Install Android build tools
         run: sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
 
-      - name: Create Android TWA project from scratch
+      - name: Create project directories
         run: |
-          mkdir -p twa-app/app/src/main/res/mipmap-hdpi
           mkdir -p twa-app/app/src/main/res/mipmap-mdpi
+          mkdir -p twa-app/app/src/main/res/mipmap-hdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xhdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xxhdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xxxhdpi
           mkdir -p twa-app/app/src/main/res/values
-          mkdir -p twa-app/app/src/main/java/com/kidsactivitytracker/app
+          mkdir -p twa-app/gradle/wrapper
 
-      - name: Download app icons from GitHub Pages
+      - name: Download app icon
         run: |
-          curl -L "https://salmanhathi.github.io/kids-activity-tracker/icon-192.png" -o icon-192.png || true
+          curl -L "https://salmanhathi.github.io/kids-activity-tracker/icon-192.png" -o icon.png || true
           for size in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            cp icon-192.png twa-app/app/src/main/res/mipmap-$size/ic_launcher.png
-            cp icon-192.png twa-app/app/src/main/res/mipmap-$size/ic_launcher_round.png
+            cp icon.png twa-app/app/src/main/res/mipmap-$size/ic_launcher.png
+            cp icon.png twa-app/app/src/main/res/mipmap-$size/ic_launcher_round.png
           done
+
+      - name: Write gradle-wrapper.properties
+        run: |
+          cat > twa-app/gradle/wrapper/gradle-wrapper.properties << 'PROPS'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          PROPS
+
+      - name: Write gradle.properties
+        run: |
+          cat > twa-app/gradle.properties << 'PROPS'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m
+          PROPS
 
       - name: Write settings.gradle
         run: |
@@ -129,9 +147,6 @@ jobs:
                   android:label="Kids Activity Tracker"
                   android:theme="@android:style/Theme.NoTitleBar"
                   android:supportsRtl="true">
-                  <meta-data
-                      android:name="asset_statements"
-                      android:value='[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://salmanhathi.github.io"}}]'/>
                   <activity
                       android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
                       android:exported="true">
@@ -141,9 +156,6 @@ jobs:
                       <meta-data
                           android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
                           android:value="#0d0d2b"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE"
-                          android:value="@mipmap/ic_launcher"/>
                       <meta-data
                           android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
                           android:value="#060618"/>
@@ -179,20 +191,9 @@ jobs:
           </resources>
           XML
 
-      - name: Write gradle-wrapper.properties
-        run: |
-          mkdir -p twa-app/gradle/wrapper
-          cat > twa-app/gradle/wrapper/gradle-wrapper.properties << 'PROPS'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          PROPS
-
       - name: Install Gradle wrapper
         working-directory: twa-app
-        run: gradle wrapper --gradle-version=8.4 || true
+        run: gradle wrapper --gradle-version=8.4
 
       - name: Generate signing keystore
         run: |
@@ -210,13 +211,11 @@ jobs:
       - name: Build release APK
         working-directory: twa-app
         run: ./gradlew assembleRelease --no-daemon --stacktrace
-        env:
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
       - name: Find APK
         run: find twa-app -name "*.apk"
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kids-activity-tracker-apk
