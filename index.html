@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#0d0d2b"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Kids Activity Tracker"/>
+<link rel="manifest" href="manifest.json"/>
+<title>⭐ Kids Activity Tracker</title>
+<style>
+:root {
+  --deep:#060618; --mid:#0d0d2b; --card:#12123a; --lift:#1a1a52;
+  --pink:#e040fb; --blue:#40c4ff; --teal:#1de9b6;
+  --gold:#ffd54f; --warm:#ffab40; --coral:#ff6b6b; --green:#69f0ae;
+  --txt:#eef2ff; --dim:#8892b0; --border:rgba(100,120,255,0.18);
+  --r:18px;
+  --glow-blue:0 0 20px rgba(64,196,255,0.3);
+  --glow-gold:0 0 20px rgba(255,213,79,0.5);
+  --glow-pink:0 0 20px rgba(224,64,251,0.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--deep);color:var(--txt);}
+
+/* ── Starfield ── */
+#starfield{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 20% 50%,#1a0a3e 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,#0a1a3e 0%,transparent 60%),#060618;}
+.star-dot{position:absolute;border-radius:50%;background:white;animation:twinkle var(--dur,3s) ease-in-out infinite var(--delay,0s);}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+.float-star{position:fixed;pointer-events:none;z-index:1;animation:floatUp var(--dur,8s) linear infinite var(--delay,0s);opacity:0;}
+@keyframes floatUp{0%{transform:translateY(100vh) rotate(0);opacity:0}10%{opacity:.4}90%{opacity:.15}100%{transform:translateY(-100px) rotate(360deg);opacity:0}}
+
+/* ── Screens ── */
+.screen{display:none;position:fixed;inset:0;z-index:10;}
+.screen.active{display:block;}
+#setupScreen.active,#loginScreen.active{display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px;}
+#appScreen.active{display:flex;flex-direction:column;}
+
+/* ════════ SETUP ════════ */
+#setupScreen{background:linear-gradient(160deg,#0d0d2b,#1a0a3e,#0a1a3e);}
+.setup-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:28px;
+  padding:32px 24px;max-width:480px;width:100%;backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);}
+.setup-logo{text-align:center;font-size:3rem;margin-bottom:6px;}
+.setup-card h1{font-size:1.7rem;text-align:center;background:linear-gradient(90deg,var(--blue),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
+.setup-card>p{text-align:center;color:var(--dim);margin-bottom:24px;font-size:.85rem;}
+.setup-step{display:none;} .setup-step.active{display:block;}
+.step-indicator{display:flex;justify-content:center;gap:8px;margin-bottom:20px;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s;}
+.step-dot.active{background:var(--blue);box-shadow:var(--glow-blue);}
+.step-dot.done{background:var(--teal);}
+.fl{font-size:.72rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.fi{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:11px;font-size:.95rem;color:var(--txt);outline:none;margin-bottom:13px;}
+.fi:focus{border-color:var(--blue);box-shadow:var(--glow-blue);}
+.fi::placeholder{color:var(--dim);}
+.fi option{background:var(--mid);}
+.btn-p{width:100%;padding:14px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),var(--pink));color:white;
+  font-size:.95rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(64,196,255,.3);
+  transition:transform .1s;}
+.btn-p:active{transform:scale(.97);}
+.btn-sec{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;
+  background:transparent;color:var(--dim);font-size:.88rem;cursor:pointer;margin-top:8px;}
+
+/* Photo upload */
+.photo-area{border:2px dashed var(--border);border-radius:14px;padding:20px;
+  text-align:center;cursor:pointer;margin-bottom:13px;transition:all .2s;}
+.photo-area:hover{border-color:var(--blue);background:rgba(64,196,255,.05);}
+.photo-area input{display:none;}
+.photo-prev{width:80px;height:80px;border-radius:50%;object-fit:cover;
+  border:3px solid var(--pink);display:none;margin:0 auto 8px;}
+.photo-hint{color:var(--dim);font-size:.82rem;}
+.avatar-avatar{font-size:.72rem;font-weight:700;color:var(--dim);margin:12px 0 6px;}
+.emoji-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px;}
+.e-opt{width:48px;height:48px;border-radius:12px;font-size:1.5rem;display:flex;
+  align-items:center;justify-content:center;border:1.5px solid var(--border);
+  cursor:pointer;background:rgba(255,255,255,.03);transition:all .15s;}
+.e-opt.sel,.e-opt:hover{border-color:var(--pink);background:rgba(224,64,251,.12);transform:scale(1.1);}
+
+/* Goals section */
+.goals-list{margin-bottom:12px;}
+.goal-item{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:11px;padding:10px 12px;margin-bottom:8px;}
+.goal-icon-sel{font-size:1.3rem;cursor:pointer;min-width:28px;}
+.goal-name{flex:1;background:transparent;border:none;color:var(--txt);font-size:.88rem;outline:none;}
+.goal-stars-input{width:55px;padding:4px 6px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);border-radius:8px;color:var(--gold);
+  font-size:.82rem;font-weight:700;text-align:center;outline:none;}
+.goal-remove{background:none;border:none;color:var(--coral);cursor:pointer;font-size:1rem;padding:2px 4px;}
+.add-goal-btn{display:flex;align-items:center;gap:6px;padding:10px 14px;
+  border:1.5px dashed var(--border);border-radius:11px;background:transparent;
+  color:var(--dim);font-size:.85rem;cursor:pointer;width:100%;justify-content:center;
+  margin-bottom:12px;transition:all .2s;}
+.add-goal-btn:hover{border-color:var(--teal);color:var(--teal);}
+
+/* Habit prompts */
+.habit-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;
+  border-radius:99px;border:1px solid var(--border);background:rgba(255,255,255,.04);
+  font-size:.75rem;cursor:pointer;margin:3px;transition:all .15s;}
+.habit-chip:hover{border-color:var(--teal);background:rgba(29,233,182,.1);}
+
+/* ════════ LOGIN ════════ */
+#loginScreen{background:linear-gradient(160deg,#060618,#0d0d2b);}
+.login-card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:28px;
+  padding:36px 24px;max-width:360px;width:100%;text-align:center;backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.login-av{width:96px;height:96px;border-radius:50%;margin:0 auto 14px;overflow:hidden;
+  border:3px solid var(--blue);display:flex;align-items:center;justify-content:center;
+  font-size:3rem;background:var(--lift);animation:orbitGlow 3s ease-in-out infinite;}
+.login-av img{width:100%;height:100%;object-fit:cover;}
+@keyframes orbitGlow{0%,100%{box-shadow:0 0 0 0 rgba(64,196,255,.4)}50%{box-shadow:0 0 30px 8px rgba(64,196,255,.2)}}
+.login-card h2{font-size:1.5rem;font-weight:900;margin-bottom:3px;}
+.login-card p{color:var(--dim);font-size:.83rem;margin-bottom:20px;}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:18px;}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--blue);background:transparent;transition:all .2s;}
+.pin-dot.filled{background:var(--blue);box-shadow:var(--glow-blue);}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:250px;margin:0 auto;}
+.num-btn{aspect-ratio:1;border:1px solid var(--border);border-radius:14px;
+  background:rgba(255,255,255,.05);font-size:1.3rem;font-weight:700;
+  color:var(--txt);cursor:pointer;transition:all .12s;}
+.num-btn:active{transform:scale(.91);background:rgba(64,196,255,.15);}
+.pin-err{color:var(--coral);font-size:.82rem;margin-top:10px;min-height:18px;}
+
+/* ════════ APP ════════ */
+.app-header{background:linear-gradient(135deg,#0d0d2b,#12123a);
+  border-bottom:1px solid var(--border);padding:14px 16px 12px;flex-shrink:0;}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.kid-chip{display:flex;align-items:center;gap:10px;}
+.hdr-av{width:42px;height:42px;border-radius:50%;border:2px solid var(--blue);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  background:var(--lift);flex-shrink:0;}
+.hdr-av img{width:100%;height:100%;object-fit:cover;}
+.hdr-name{font-size:1.05rem;font-weight:900;}
+.hdr-date{font-size:.7rem;color:var(--dim);}
+.star-chip{background:linear-gradient(135deg,var(--gold),var(--warm));color:#3a2000;
+  border-radius:50px;padding:6px 12px;font-weight:900;font-size:.9rem;
+  box-shadow:var(--glow-gold);}
+.exit-btn{background:rgba(255,255,255,.07);border:1px solid var(--border);
+  color:var(--dim);padding:6px 10px;border-radius:9px;cursor:pointer;font-size:.75rem;font-weight:700;}
+.prog-row{display:flex;align-items:center;gap:8px;}
+.prog-track{flex:1;height:9px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--pink));transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.prog-pct{font-size:.75rem;font-weight:800;color:var(--blue);min-width:34px;text-align:right;}
+
+/* Tab bar */
+.tab-bar{display:flex;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab-btn{flex:1;padding:10px 2px;border:none;background:transparent;font-size:.65rem;
+  font-weight:800;color:var(--dim);cursor:pointer;text-transform:uppercase;
+  letter-spacing:.05em;border-bottom:2px solid transparent;transition:all .2s;}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* Scroll */
+.tab-scroll{flex:1;overflow-y:auto;padding:12px 14px 90px;}
+.tab-scroll::-webkit-scrollbar{width:3px;}
+.tab-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+/* Category label */
+.cat-lbl{font-size:.67rem;font-weight:800;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.1em;margin:16px 0 7px 2px;display:flex;align-items:center;gap:6px;}
+.cat-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Task card */
+.task-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:11px;
+  cursor:pointer;transition:all .18s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.task-card:active{transform:scale(.98);}
+.task-card.done{background:rgba(29,233,182,.07);border-color:rgba(29,233,182,.3);}
+.t-icon{width:44px;height:44px;border-radius:13px;background:var(--lift);
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;
+  border:1px solid var(--border);}
+.task-card.done .t-icon{background:rgba(29,233,182,.15);border-color:rgba(29,233,182,.4);}
+.t-body{flex:1;}
+.t-name{font-size:.92rem;font-weight:700;}
+.task-card.done .t-name{color:var(--teal);}
+.t-sub{font-size:.7rem;color:var(--dim);margin-top:1px;}
+.t-star{font-size:1.4rem;flex-shrink:0;}
+.task-card.done .t-star{filter:drop-shadow(0 0 5px gold);}
+
+/* Bonus banner */
+.bonus-banner{border-radius:var(--r);padding:12px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:11px;border:1px solid;}
+.bonus-banner.pending{background:rgba(255,171,64,.08);border-color:rgba(255,171,64,.25);}
+.bonus-banner.earned{background:rgba(29,233,182,.1);border-color:rgba(29,233,182,.4);}
+.b-icon{font-size:1.8rem;}
+.b-text h3{font-size:.85rem;font-weight:800;}
+.b-text p{font-size:.72rem;color:var(--dim);margin-top:1px;}
+
+/* ── Overview ── */
+.ov-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px;margin-bottom:12px;}
+.ov-card h3{font-size:.85rem;font-weight:800;margin-bottom:12px;color:var(--blue);}
+.ov-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);}
+.ov-row:last-child{border-bottom:none;}
+.ov-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dd{background:var(--teal);box-shadow:0 0 5px rgba(29,233,182,.5);}
+.md{background:var(--coral);}
+.ov-name{flex:1;font-size:.85rem;}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.day-cell{text-align:center;}
+.day-lbl{font-size:.58rem;font-weight:700;color:var(--dim);text-transform:uppercase;}
+.day-circ{width:32px;height:32px;border-radius:50%;margin:3px auto;display:flex;
+  align-items:center;justify-content:center;font-size:.7rem;font-weight:800;
+  background:var(--lift);color:var(--dim);border:1px solid var(--border);}
+.day-circ.partial{background:rgba(64,196,255,.18);color:var(--blue);border-color:var(--blue);}
+.day-circ.full{background:rgba(29,233,182,.18);color:var(--teal);border-color:var(--teal);}
+.day-circ.today-mark{border-color:var(--gold);color:var(--gold);}
+.stat-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.stat-box{text-align:center;background:var(--lift);border-radius:13px;
+  padding:13px 5px;border:1px solid var(--border);}
+.stat-num{font-size:1.6rem;font-weight:900;}
+.stat-lbl{font-size:.6rem;color:var(--dim);font-weight:700;text-transform:uppercase;margin-top:1px;}
+
+/* ── Goals / Rewards ── */
+.reward-hero{background:linear-gradient(135deg,#1a0a3e,#0a1a3e);
+  border:1px solid rgba(224,64,251,.3);border-radius:var(--r);
+  padding:22px;margin-bottom:12px;text-align:center;box-shadow:var(--glow-pink);}
+.reward-hero .ts{font-size:2.6rem;margin-bottom:3px;}
+.reward-hero h2{font-size:1.2rem;font-weight:900;background:linear-gradient(90deg,var(--gold),var(--warm));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.reward-hero p{color:var(--dim);font-size:.82rem;margin-top:3px;}
+.bar-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.bar-labels{display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;margin-bottom:7px;}
+.bar-track{background:var(--lift);border-radius:99px;height:14px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--blue),var(--pink));
+  transition:width .8s ease;box-shadow:0 0 10px rgba(64,196,255,.3);}
+.bar-sub{text-align:center;margin-top:7px;font-size:.75rem;color:var(--dim);}
+
+/* Goal cards */
+.goals-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.goals-section h3{font-size:.85rem;font-weight:800;margin-bottom:12px;color:var(--pink);}
+.goal-reward-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;
+  background:rgba(255,255,255,.02);}
+.goal-reward-card.achieved{border-color:rgba(255,213,79,.5);background:rgba(255,213,79,.06);}
+.goal-reward-card.claimable{border-color:rgba(105,240,174,.5);background:rgba(105,240,174,.06);
+  animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(105,240,174,.3)}50%{box-shadow:0 0 15px 4px rgba(105,240,174,.2)}}
+.gr-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.gr-icon{font-size:1.8rem;}
+.gr-title{font-size:.9rem;font-weight:800;}
+.gr-desc{font-size:.75rem;color:var(--dim);margin-top:1px;}
+.gr-progress{display:flex;align-items:center;gap:8px;}
+.gr-bar-track{flex:1;height:8px;background:var(--lift);border-radius:99px;overflow:hidden;}
+.gr-bar-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.gr-bar-fill.prog{background:linear-gradient(90deg,var(--blue),var(--pink));}
+.gr-bar-fill.done{background:linear-gradient(90deg,var(--gold),var(--warm));}
+.gr-pct{font-size:.72rem;font-weight:800;color:var(--dim);min-width:34px;text-align:right;}
+.claim-btn{margin-top:10px;width:100%;padding:10px;border:none;border-radius:11px;
+  background:linear-gradient(135deg,var(--gold),var(--warm));color:#3a2000;
+  font-size:.85rem;font-weight:900;cursor:pointer;}
+.habit-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
+  border-radius:99px;font-size:.72rem;font-weight:700;margin-top:6px;}
+.habit-badge.good{background:rgba(105,240,174,.15);color:var(--green);border:1px solid rgba(105,240,174,.3);}
+
+/* Milestone */
+.milestone-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.milestone-card h3{font-size:.85rem;font-weight:800;margin-bottom:11px;color:var(--blue);}
+.ms-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ms-row:last-child{border-bottom:none;}
+.ms-icon{font-size:1.5rem;}
+.ms-body{flex:1;}
+.ms-title{font-size:.88rem;font-weight:700;}
+.ms-sub{font-size:.72rem;color:var(--dim);margin-top:1px;}
+.ms-badge{font-size:.7rem;font-weight:800;padding:4px 9px;border-radius:99px;}
+.ms-badge.earned{background:rgba(29,233,182,.18);color:var(--teal);border:1px solid rgba(29,233,182,.4);}
+.ms-badge.locked{background:var(--lift);color:var(--dim);border:1px solid var(--border);}
+
+/* ── Admin ── */
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.admin-card h3{font-size:.85rem;font-weight:800;margin-bottom:12px;color:var(--pink);}
+.a-field{margin-bottom:11px;}
+.a-field label{display:block;font-size:.7rem;font-weight:700;color:var(--blue);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.a-field input,.a-field select{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);border-radius:10px;font-size:.9rem;color:var(--txt);outline:none;}
+.a-field input:focus{border-color:var(--blue);}
+.save-btn{width:100%;padding:11px;border:none;border-radius:11px;
+  background:linear-gradient(135deg,var(--teal),var(--blue));color:#001a14;
+  font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:8px;}
+.danger-btn{width:100%;padding:11px;border:1px solid rgba(255,107,107,.3);border-radius:11px;
+  background:rgba(255,107,107,.12);color:var(--coral);font-size:.88rem;font-weight:800;cursor:pointer;margin-bottom:8px;}
+.tog-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);}
+.tog-row:last-child{border-bottom:none;}
+.tog-ico{font-size:1.1rem;width:26px;text-align:center;}
+.tog-nm{flex:1;font-size:.85rem;}
+.tog{width:42px;height:22px;border-radius:99px;background:var(--lift);border:1px solid var(--border);
+  cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;
+  background:var(--dim);transition:left .2s,background .2s;}
+.tog.on{background:rgba(29,233,182,.2);border-color:var(--teal);}
+.tog.on::after{left:23px;background:var(--teal);}
+
+/* Reminders */
+.reminder-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.reminder-row:last-child{border-bottom:none;}
+.reminder-label{flex:1;font-size:.85rem;}
+.reminder-time{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;
+  padding:6px 8px;color:var(--txt);font-size:.82rem;outline:none;width:95px;}
+.reminder-tog{width:42px;height:22px;border-radius:99px;background:var(--lift);
+  border:1px solid var(--border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.reminder-tog::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;
+  border-radius:50%;background:var(--dim);transition:left .2s,background .2s;}
+.reminder-tog.on{background:rgba(64,196,255,.2);border-color:var(--blue);}
+.reminder-tog.on::after{left:23px;background:var(--blue);}
+
+/* ════════ CELEBRATION ════════ */
+#celebOverlay{position:fixed;inset:0;z-index:200;pointer-events:none;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;transition:opacity .25s;background:rgba(6,6,24,.5);backdrop-filter:blur(4px);}
+#celebOverlay.show{opacity:1;}
+#avatarStage{position:relative;width:100%;max-width:480px;height:88vh;
+  display:flex;align-items:flex-end;justify-content:center;}
+.char-img{position:absolute;bottom:0;height:82%;object-fit:contain;
+  filter:drop-shadow(0 0 40px rgba(224,64,251,.5));transform-origin:bottom center;}
+.char-emoji{position:absolute;bottom:0;font-size:8rem;line-height:1;
+  transform-origin:bottom center;}
+@keyframes jumpBounce{
+  0%{transform:translateY(0) scale(1) rotate(0)}
+  15%{transform:translateY(-80px) scale(1.05) rotate(-4deg)}
+  30%{transform:translateY(-50px) scale(1) rotate(3deg)}
+  50%{transform:translateY(-70px) scale(1.03) rotate(-2deg)}
+  70%{transform:translateY(-18px) scale(1) rotate(1deg)}
+  100%{transform:translateY(0) scale(1) rotate(0)}}
+@keyframes slideInLeft{
+  0%{transform:translateX(-110vw) rotate(-8deg);opacity:0}
+  55%{transform:translateX(12px) rotate(2deg);opacity:1}
+  75%{transform:translateX(-5px) rotate(-1deg)}
+  100%{transform:translateX(0) rotate(0)}}
+@keyframes spinEntrance{
+  0%{transform:scale(0) rotate(-360deg);opacity:0}
+  65%{transform:scale(1.1) rotate(12deg);opacity:1}
+  100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes charWiggle{
+  0%,100%{transform:rotate(0) scale(1)}
+  25%{transform:rotate(-6deg) scale(1.03)}
+  75%{transform:rotate(6deg) scale(1.03)}}
+.msg-bubble{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--pink),var(--blue));color:white;
+  border-radius:20px;padding:10px 20px;font-size:1rem;font-weight:900;
+  white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.35);
+  animation:bubblePop .5s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes bubblePop{0%{transform:translateX(-50%) scale(0)}100%{transform:translateX(-50%) scale(1)}}
+.particle{position:absolute;pointer-events:none;font-size:1.5rem;
+  animation:particleFly var(--dur,1.5s) ease-out forwards;}
+@keyframes particleFly{0%{transform:translate(0,0) scale(0) rotate(0);opacity:1}
+  100%{transform:translate(var(--tx),var(--ty)) scale(1) rotate(var(--rot,360deg));opacity:0}}
+.balloon-p{position:absolute;font-size:1.9rem;animation:balloonRise var(--dur,2.5s) ease-out forwards;}
+@keyframes balloonRise{0%{transform:translate(var(--tx,0),0) scale(0);opacity:0}
+  20%{opacity:1;transform:translate(var(--tx,0),0) scale(1)}
+  100%{transform:translate(var(--tx,0),-320px) scale(1);opacity:0}}
+.confetti-p{position:absolute;width:9px;height:9px;border-radius:2px;
+  animation:confettiFall var(--dur,2s) ease-in forwards;}
+@keyframes confettiFall{0%{transform:translate(var(--tx,0),0) rotate(0);opacity:1}
+  100%{transform:translate(calc(var(--tx,0) + var(--drift,0px)),300px) rotate(720deg);opacity:0}}
+
+/* All done banner */
+#allDoneBanner{position:fixed;top:0;left:0;right:0;z-index:300;padding:13px 20px;
+  text-align:center;font-size:1rem;font-weight:900;color:white;
+  background:linear-gradient(90deg,var(--pink),var(--blue),var(--teal));
+  transform:translateY(-100%);transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 4px 20px rgba(0,0,0,.4);}
+#allDoneBanner.show{transform:translateY(0);}
+
+/* Toast */
+.toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%) translateY(30px);
+  background:var(--lift);border:1px solid var(--border);color:var(--txt);
+  padding:9px 20px;border-radius:50px;font-size:.85rem;font-weight:700;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);z-index:400;opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);
+  display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:var(--mid);border:1px solid var(--border);
+  border-radius:24px 24px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;
+  max-height:80vh;overflow-y:auto;}
+.modal-sheet h3{font-size:1rem;font-weight:800;margin-bottom:16px;}
+.modal-close{float:right;background:none;border:none;color:var(--dim);font-size:1.2rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="starfield"></div>
+<div id="allDoneBanner">🎊 ALL MISSIONS COMPLETE! BONUS STAR! 🌟</div>
+<div id="celebOverlay"><div id="avatarStage"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- Claim Modal -->
+<div class="modal-bg" id="claimModal">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="claimTitle">🎉 Goal Achieved!</h3>
+    <div id="claimBody"></div>
+    <button class="btn-p" style="margin-top:16px" onclick="confirmClaim()">✅ I Gave the Reward!</button>
+  </div>
+</div>
+
+<!-- ════ SETUP ════ -->
+<div id="setupScreen" class="screen">
+  <div class="setup-card">
+    <div class="setup-logo">🚀</div>
+    <h1>Kids Activity Tracker</h1>
+    <p>Build great habits, earn amazing rewards!</p>
+    <div class="step-indicator">
+      <div class="step-dot active" id="sd0"></div>
+      <div class="step-dot" id="sd1"></div>
+      <div class="step-dot" id="sd2"></div>
+    </div>
+
+    <!-- Step 1: PIN -->
+    <div class="setup-step active" id="step1">
+      <div class="fl">Create Admin PIN (4–6 digits)</div>
+      <input class="fi" id="sPin" type="password" inputmode="numeric" maxlength="6" placeholder="e.g. 1234"/>
+      <div class="fl">Confirm PIN</div>
+      <input class="fi" id="sPin2" type="password" inputmode="numeric" maxlength="6" placeholder="Repeat PIN"/>
+      <button class="btn-p" onclick="setupStep1()">Next →</button>
+    </div>
+
+    <!-- Step 2: Profile -->
+    <div class="setup-step" id="step2">
+      <div class="fl">Child's Name</div>
+      <input class="fi" id="sName" placeholder="e.g. Sofia"/>
+      <div class="fl">Age</div>
+      <input class="fi" id="sAge" type="number" min="1" max="18" placeholder="e.g. 7"/>
+      <div class="fl">Upload Photo (optional)</div>
+      <div class="photo-area" onclick="document.getElementById('photoInput').click()">
+        <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(this)"/>
+        <img id="photoPrev" class="photo-prev"/>
+        <div class="photo-hint" id="photoHint">📸 Tap to upload a photo<br/><small>Will be used as the animated character</small></div>
+      </div>
+      <div class="avatar-avatar">Or choose an emoji avatar</div>
+      <div class="emoji-row">
+        <div class="e-opt sel" onclick="pickEmoji(this,'👧')">👧</div>
+        <div class="e-opt" onclick="pickEmoji(this,'👦')">👦</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🦄')">🦄</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🌟')">🌟</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🐱')">🐱</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🦋')">🦋</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🐼')">🐼</div>
+        <div class="e-opt" onclick="pickEmoji(this,'🌈')">🌈</div>
+      </div>
+      <div class="fl">Monthly Star Goal (overall)</div>
+      <input class="fi" id="sGoal" type="number" min="10" value="150" placeholder="150"/>
+      <button class="btn-p" onclick="setupStep2()">Next →</button>
+    </div>
+
+    <!-- Step 3: Goals -->
+    <div class="setup-step" id="step3">
+      <div class="fl">🎯 Add Reward Goals</div>
+      <p style="color:var(--dim);font-size:.8rem;margin-bottom:12px;">Set goals to motivate your child — like buying a cycle, chocolate, or a toy!</p>
+      <div class="goals-list" id="goalsList"></div>
+      <button class="add-goal-btn" onclick="addGoalRow()">➕ Add a Goal</button>
+      <div class="fl" style="margin-top:8px">Quick Add Habits</div>
+      <div id="habitChips"></div>
+      <button class="btn-p" style="margin-top:16px" onclick="setupStep3()">Finish Setup 🚀</button>
+      <button class="btn-sec" onclick="setupStep3()">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ LOGIN ════ -->
+<div id="loginScreen" class="screen">
+  <div class="login-card">
+    <div class="login-av" id="loginAv"></div>
+    <h2 id="loginName">Kids Activity Tracker</h2>
+    <p>Enter Admin PIN for today's mission</p>
+    <div class="pin-dots" id="pinDots"></div>
+    <div class="numpad">
+      <button class="num-btn" onclick="numPress('1')">1</button>
+      <button class="num-btn" onclick="numPress('2')">2</button>
+      <button class="num-btn" onclick="numPress('3')">3</button>
+      <button class="num-btn" onclick="numPress('4')">4</button>
+      <button class="num-btn" onclick="numPress('5')">5</button>
+      <button class="num-btn" onclick="numPress('6')">6</button>
+      <button class="num-btn" onclick="numPress('7')">7</button>
+      <button class="num-btn" onclick="numPress('8')">8</button>
+      <button class="num-btn" onclick="numPress('9')">9</button>
+      <button class="num-btn" onclick="numPress('0')">0</button>
+      <button class="num-btn" style="grid-column:3" onclick="numDel()">⌫</button>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div id="appScreen" class="screen">
+  <div class="app-header">
+    <div class="hdr-row">
+      <div class="kid-chip">
+        <div class="hdr-av" id="appAv"></div>
+        <div>
+          <div class="hdr-name" id="appName">Star Explorer</div>
+          <div class="hdr-date" id="appDate"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="star-chip" id="starChip">⭐ 0</div>
+        <button class="exit-btn" onclick="doLogout()">Exit</button>
+      </div>
+    </div>
+    <div class="prog-row">
+      <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div class="prog-pct" id="progPct">0%</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tb-today" onclick="switchTab('today',this)">📋 Today</button>
+    <button class="tab-btn" id="tb-overview" onclick="switchTab('overview',this)">📊 Stats</button>
+    <button class="tab-btn" id="tb-rewards" onclick="switchTab('rewards',this)">🎯 Goals</button>
+    <button class="tab-btn" id="tb-admin" onclick="adminTabClick(this)">⚙️ Admin</button>
+  </div>
+  <div class="tab-scroll" id="tabScroll">
+    <div id="tab-today"></div>
+    <div id="tab-overview" style="display:none"></div>
+    <div id="tab-rewards" style="display:none"></div>
+    <div id="tab-admin" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════ DATA ══════════════════ */
+const DEFAULT_TASKS = [
+  {id:'wakeup', name:'Woke Up Early',           icon:'🌅', cat:'Morning'},
+  {id:'brush',  name:'Brushed Teeth',            icon:'🦷', cat:'Morning'},
+  {id:'water1', name:'Drink Water (Morning)',    icon:'💧', cat:'Morning'},
+  {id:'dress',  name:'Changed Dress',            icon:'👗', cat:'Morning'},
+  {id:'bfast',  name:'Ate Breakfast',            icon:'🍳', cat:'Morning'},
+  {id:'plate',  name:'Washed Plate',             icon:'🍽️', cat:'Morning'},
+  {id:'water2', name:'Drink Water (Midday)',     icon:'💧', cat:'Afternoon'},
+  {id:'snacks', name:'Ate Snacks',               icon:'🍎', cat:'Afternoon'},
+  {id:'helpmom',name:'Helped Mom',               icon:'🤝', cat:'Afternoon'},
+  {id:'clean',  name:'Arranged & Cleaned Home',  icon:'🧹', cat:'Afternoon'},
+  {id:'lunch',  name:'Ate Lunch',                icon:'🍱', cat:'Afternoon'},
+  {id:'nap',    name:'Nap / Rest',               icon:'😴', cat:'Afternoon'},
+  {id:'play',   name:'Playtime',                 icon:'🎮', cat:'Evening'},
+  {id:'tablet', name:'Watch Tablet / TV',        icon:'📱', cat:'Evening'},
+  {id:'dinner', name:'Ate Dinner',               icon:'🍛', cat:'Evening'},
+];
+const MILESTONES = [
+  {stars:30,  icon:'🥉', label:'Bronze Explorer',  reward:'Small Treat or Sticker Pack'},
+  {stars:60,  icon:'🥈', label:'Silver Astronaut', reward:'Favourite Snack or Small Toy'},
+  {stars:100, icon:'🥇', label:'Gold Commander',   reward:'Movie Night or Big Toy'},
+  {stars:150, icon:'🏆', label:'Space Champion',   reward:'Monthly Dream Reward! 🎠'},
+];
+const HABIT_PROMPTS = [
+  {icon:'📖', name:'Read a Book', cat:'Evening'},
+  {icon:'🙏', name:'Say Thank You', cat:'Afternoon'},
+  {icon:'🧘', name:'Breathing Exercise', cat:'Morning'},
+  {icon:'🌱', name:'Water the Plants', cat:'Morning'},
+  {icon:'🛏️', name:'Make the Bed', cat:'Morning'},
+  {icon:'🦻', name:'Listen Without Interrupting', cat:'Afternoon'},
+  {icon:'💌', name:'Draw a Picture for Someone', cat:'Evening'},
+  {icon:'🌙', name:'Sleep on Time', cat:'Evening'},
+];
+const CELEB_MSGS = ['⭐ Star Earned!','🌟 Superstar!','🚀 Amazing!','💫 Fantastic!','🎯 Nailed It!','✨ Brilliant!','🏅 You Rock!'];
+const ANIM_MODES = ['jump','slide','spin'];
+const GOAL_ICONS = ['🚲','🍫','🎠','🧸','👟','📚','🎮','🍕','✈️','🌴','💎','🎪'];
+
+let pinBuf = '';
+let selEmoji = '👧';
+let photoDataURL = null;
+let adminOK = false;
+let pendingGoalIcons = {};
+let claimingGoalId = null;
+
+const S = {
+  get:(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),
+};
+const todayKey = () => { const d=new Date(); return `day_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`; };
+const getProfile = () => S.get('profile', null);
+const getTasks   = () => S.get('tasks', DEFAULT_TASKS);
+const getGoals   = () => S.get('goals', []);
+const getDayData = k  => S.get(k, {done:[]});
+const allDayKeys = () => Object.keys(localStorage).filter(k=>k.startsWith('day_')).sort();
+
+/* ══ Starfield ══ */
+function buildStarfield(){
+  const sf=document.getElementById('starfield');
+  for(let i=0;i<120;i++){
+    const s=document.createElement('div'); s.className='star-dot';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--delay:${Math.random()*5}s`;
+    sf.appendChild(s);
+  }
+  ['⭐','🌟','✨','💫'].forEach((e,i)=>{
+    for(let j=0;j<2;j++){
+      const f=document.createElement('div'); f.className='float-star'; f.textContent=e;
+      f.style.cssText=`left:${Math.random()*100}%;font-size:${.8+Math.random()*.8}rem;--dur:${7+Math.random()*7}s;--delay:${Math.random()*8}s`;
+      document.body.appendChild(f);
+    }
+  });
+}
+
+/* ══════════════════ SETUP ══════════════════ */
+function setStepDots(step){
+  for(let i=0;i<3;i++){
+    const d=document.getElementById('sd'+i);
+    d.classList.remove('active','done');
+    if(i<step) d.classList.add('done');
+    else if(i===step) d.classList.add('active');
+  }
+}
+function handlePhoto(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    photoDataURL=e.target.result;
+    const p=document.getElementById('photoPrev');
+    p.src=photoDataURL; p.style.display='block';
+    document.getElementById('photoHint').innerHTML='✅ Photo uploaded!';
+    document.querySelectorAll('.e-opt').forEach(el=>el.classList.remove('sel'));
+    selEmoji=null;
+  };
+  reader.readAsDataURL(file);
+}
+function pickEmoji(el,emoji){
+  document.querySelectorAll('.e-opt').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); selEmoji=emoji; photoDataURL=null;
+  document.getElementById('photoPrev').style.display='none';
+  document.getElementById('photoHint').innerHTML='📸 Tap to upload a photo<br/><small>Will be used as the animated character</small>';
+}
+function setupStep1(){
+  const p1=document.getElementById('sPin').value.trim();
+  const p2=document.getElementById('sPin2').value.trim();
+  if(p1.length<4){alert('PIN must be at least 4 digits');return;}
+  if(p1!==p2){alert('PINs do not match');return;}
+  S.set('adminPin',p1);
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.add('active');
+  setStepDots(1);
+}
+function setupStep2(){
+  const name=document.getElementById('sName').value.trim();
+  if(!name){alert('Please enter a name');return;}
+  const age=document.getElementById('sAge').value.trim();
+  const goal=parseInt(document.getElementById('sGoal').value)||150;
+  const avatar=photoDataURL||(selEmoji||'👧');
+  S.set('profile',{name,age,avatar,goal});
+  if(!S.get('tasks',null)) S.set('tasks',DEFAULT_TASKS);
+  // Build goal step
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step3').classList.add('active');
+  setStepDots(2);
+  buildGoalStep();
+}
+function buildGoalStep(){
+  // Habit chips
+  const chips=document.getElementById('habitChips');
+  chips.innerHTML='';
+  HABIT_PROMPTS.forEach(h=>{
+    const c=document.createElement('span'); c.className='habit-chip';
+    c.innerHTML=`${h.icon} ${h.name}`;
+    c.onclick=()=>{ addGoalRowData(h.icon,h.name,'habit'); c.style.opacity='.4'; c.onclick=null; };
+    chips.appendChild(c);
+  });
+}
+function addGoalRow(){
+  addGoalRowData('🎯','','goal');
+}
+function addGoalRowData(icon,name,type){
+  const list=document.getElementById('goalsList');
+  const id='g_'+Date.now();
+  const row=document.createElement('div'); row.className='goal-item'; row.id=id;
+  row.innerHTML=`
+    <span class="goal-icon-sel" onclick="cycleGoalIcon('${id}')">${icon}</span>
+    <input class="goal-name" placeholder="${type==='habit'?'Good Habit':'e.g. Buy Cycle, Chocolate...'}" value="${name}"/>
+    <input class="goal-stars-input" type="number" min="5" max="999" placeholder="⭐" value="${type==='habit'?30:60}" title="Stars needed"/>
+    <button class="goal-remove" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  pendingGoalIcons[id]={icon,iconIdx:GOAL_ICONS.indexOf(icon)>=0?GOAL_ICONS.indexOf(icon):0,type};
+  list.appendChild(row);
+}
+function cycleGoalIcon(id){
+  const data=pendingGoalIcons[id];
+  data.iconIdx=(data.iconIdx+1)%GOAL_ICONS.length;
+  const icon=GOAL_ICONS[data.iconIdx];
+  data.icon=icon;
+  document.querySelector(`#${id} .goal-icon-sel`).textContent=icon;
+}
+function setupStep3(){
+  const rows=document.querySelectorAll('#goalsList .goal-item');
+  const goals=[];
+  rows.forEach(row=>{
+    const name=row.querySelector('.goal-name').value.trim();
+    const stars=parseInt(row.querySelector('.goal-stars-input').value)||60;
+    const iconEl=row.querySelector('.goal-icon-sel');
+    const icon=iconEl?iconEl.textContent.trim():'🎯';
+    const type=pendingGoalIcons[row.id]?.type||'goal';
+    if(name) goals.push({id:'goal_'+Date.now()+Math.random(),icon,name,stars,type,claimed:false,earnedAt:null});
+  });
+  S.set('goals',goals);
+  showLogin();
+}
+
+/* ══════════════════ ROUTING ══════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function init(){
+  buildStarfield();
+  scheduleReminders();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  if(!S.get('adminPin',null)){showScreen('setupScreen');return;}
+  showLogin();
+}
+function showLogin(){
+  const p=getProfile(); if(!p){showScreen('setupScreen');return;}
+  pinBuf=''; updatePinDots();
+  document.getElementById('pinErr').textContent='';
+  const av=document.getElementById('loginAv');
+  if(p.avatar&&p.avatar.startsWith('data:')){ av.innerHTML=`<img src="${p.avatar}" alt=""/>`; }
+  else{ av.textContent=p.avatar||'👧'; }
+  document.getElementById('loginName').textContent=p.name+"'s Mission Control";
+  showScreen('loginScreen');
+}
+function doLogout(){ adminOK=false; showLogin(); }
+
+/* ══════════════════ PIN ══════════════════ */
+function updatePinDots(){
+  const pin=S.get('adminPin','');
+  const dots=document.getElementById('pinDots');
+  dots.innerHTML='';
+  for(let i=0;i<pin.length;i++){
+    const d=document.createElement('div');
+    d.className='pin-dot'+(i<pinBuf.length?' filled':'');
+    dots.appendChild(d);
+  }
+}
+function numPress(d){
+  const pin=S.get('adminPin','');
+  if(pinBuf.length>=pin.length) return;
+  pinBuf+=d; updatePinDots();
+  if(pinBuf.length===pin.length) checkPin();
+}
+function numDel(){ if(pinBuf.length>0){pinBuf=pinBuf.slice(0,-1);updatePinDots();} }
+function checkPin(){
+  if(pinBuf===S.get('adminPin','')){adminOK=true;openApp();}
+  else{
+    document.getElementById('pinErr').textContent='❌ Wrong PIN, try again';
+    pinBuf=''; setTimeout(()=>{updatePinDots();document.getElementById('pinErr').textContent='';},900);
+  }
+}
+
+/* ══════════════════ APP ══════════════════ */
+function openApp(){
+  showScreen('appScreen');
+  const p=getProfile();
+  const av=document.getElementById('appAv');
+  if(p.avatar&&p.avatar.startsWith('data:')){ av.innerHTML=`<img src="${p.avatar}" alt=""/>`; }
+  else{ av.textContent=p.avatar||'👧'; }
+  document.getElementById('appName').textContent=p.name+' 🌟';
+  document.getElementById('appDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  switchTab('today',document.getElementById('tb-today'));
+}
+function switchTab(name,btn){
+  ['today','overview','rewards','admin'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).style.display='block';
+  if(btn) btn.classList.add('active');
+  document.getElementById('tabScroll').scrollTop=0;
+  if(name==='today')    renderToday();
+  if(name==='overview') renderOverview();
+  if(name==='rewards')  renderRewards();
+  if(name==='admin')    renderAdmin();
+}
+function adminTabClick(btn){
+  if(!adminOK){
+    const entered=prompt('Enter Admin PIN:','');
+    if(entered!==S.get('adminPin','')){showToast('❌ Wrong PIN');return;}
+    adminOK=true;
+  }
+  switchTab('admin',btn);
+}
+
+/* ══════════════════ TODAY ══════════════════ */
+function renderToday(){
+  const tasks=getTasks().filter(t=>t.active!==false);
+  const data=getDayData(todayKey());
+  const done=new Set(data.done);
+  const allDone=done.size===tasks.length&&tasks.length>0;
+  const stars=done.size+(allDone?1:0);
+
+  document.getElementById('starChip').textContent='⭐ '+stars;
+  const pct=tasks.length?Math.round(done.size/tasks.length*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progPct').textContent=pct+'%';
+
+  const wrap=document.getElementById('tab-today');
+  wrap.innerHTML='';
+
+  const bb=document.createElement('div');
+  bb.className='bonus-banner '+(allDone?'earned':'pending');
+  if(allDone) bb.innerHTML=`<div class="b-icon">🏆</div><div class="b-text"><h3>All done! Bonus Star! 🌟</h3><p>Every mission complete — incredible work!</p></div>`;
+  else if(done.size>0) bb.innerHTML=`<div class="b-icon">🚀</div><div class="b-text"><h3>Keep going! ${tasks.length-done.size} more for bonus star</h3><p>You're doing amazing — almost there!</p></div>`;
+  else bb.innerHTML=`<div class="b-icon">✨</div><div class="b-text"><h3>Ready for today's missions?</h3><p>Complete all tasks to earn a bonus star!</p></div>`;
+  wrap.appendChild(bb);
+
+  const cats=[...new Set(tasks.map(t=>t.cat))];
+  const ci={Morning:'🌤️',Afternoon:'☀️',Evening:'🌙'};
+  cats.forEach(cat=>{
+    const lbl=document.createElement('div'); lbl.className='cat-lbl';
+    lbl.textContent=(ci[cat]||'📌')+' '+cat;
+    wrap.appendChild(lbl);
+    tasks.filter(t=>t.cat===cat).forEach(task=>{
+      const isDone=done.has(task.id);
+      const card=document.createElement('div'); card.className='task-card'+(isDone?' done':'');
+      card.innerHTML=`<div class="t-icon">${task.icon}</div>
+        <div class="t-body"><div class="t-name">${task.name}</div>
+        <div class="t-sub">${isDone?'✓ Completed!':'Tap to complete'}</div></div>
+        <div class="t-star">${isDone?'⭐':'☆'}</div>`;
+      card.onclick=()=>toggleTask(task.id);
+      wrap.appendChild(card);
+    });
+  });
+}
+function toggleTask(id){
+  const data=getDayData(todayKey());
+  const done=new Set(data.done);
+  const tasks=getTasks().filter(t=>t.active!==false);
+  const wasAll=done.size===tasks.length;
+  if(done.has(id)){ done.delete(id); showToast('Task unmarked'); }
+  else{ done.add(id); triggerCelebration(done.size===tasks.length&&!wasAll); }
+  data.done=[...done]; S.set(todayKey(),data);
+  renderToday();
+  checkGoalProgress();
+}
+
+/* ══════════════════ CELEBRATION ══════════════════ */
+function triggerCelebration(isAllDone){
+  const p=getProfile();
+  const mode=ANIM_MODES[Math.floor(Math.random()*ANIM_MODES.length)];
+  const msg=isAllDone?'🎊 ALL DONE! YOU\'RE A STAR!':CELEB_MSGS[Math.floor(Math.random()*CELEB_MSGS.length)];
+  const overlay=document.getElementById('celebOverlay');
+  const stage=document.getElementById('avatarStage');
+  stage.innerHTML='';
+
+  const bubble=document.createElement('div'); bubble.className='msg-bubble'; bubble.textContent=msg;
+  stage.appendChild(bubble);
+
+  // Glow
+  const glow=document.createElement('div');
+  glow.style.cssText='position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(224,64,251,.25),transparent 70%);';
+  stage.appendChild(glow);
+
+  // Character (photo or emoji)
+  let char;
+  if(p.avatar&&p.avatar.startsWith('data:')){
+    char=document.createElement('img'); char.className='char-img'; char.src=p.avatar; char.alt='';
+  } else {
+    char=document.createElement('div'); char.className='char-emoji'; char.textContent=p.avatar||'👧';
+  }
+  const anims={jump:'jumpBounce 1.3s cubic-bezier(.34,1.4,.64,1) forwards',
+    slide:'slideInLeft .85s cubic-bezier(.34,1.2,.64,1) forwards',
+    spin:'spinEntrance .9s cubic-bezier(.34,1.56,.64,1) forwards'};
+  char.style.animation=anims[mode];
+  setTimeout(()=>{ char.style.animation=anims[mode]+', charWiggle .5s ease 2'; },950);
+  stage.appendChild(char);
+
+  if(mode==='jump') spawnParticles(stage,'clap');
+  else if(mode==='slide') spawnParticles(stage,'balloon');
+  else spawnParticles(stage,'confetti');
+
+  if(isAllDone){
+    spawnParticles(stage,'confetti'); spawnParticles(stage,'balloon');
+    document.getElementById('allDoneBanner').classList.add('show');
+    setTimeout(()=>document.getElementById('allDoneBanner').classList.remove('show'),4000);
+  }
+
+  overlay.classList.add('show'); overlay.style.pointerEvents='all';
+  const dismiss=()=>{ overlay.classList.remove('show'); overlay.style.pointerEvents='none'; stage.innerHTML=''; overlay.removeEventListener('click',dismiss); };
+  overlay.addEventListener('click',dismiss);
+  setTimeout(dismiss, isAllDone?4000:2800);
+}
+function spawnParticles(parent,type){
+  if(type==='clap'){
+    ['👏','⭐','✨','💫','🌟','🎉'].forEach((em,i)=>{
+      const p=document.createElement('div'); p.className='particle'; p.textContent=em;
+      const angle=Math.random()*Math.PI*2, dist=80+Math.random()*90;
+      p.style.cssText=`left:${50+Math.random()*20}%;top:40%;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist-60}px;--dur:${.8+Math.random()*.6}s;--rot:${(Math.random()-.5)*720}deg;animation-delay:${i*.07}s`;
+      parent.appendChild(p);
+    });
+  } else if(type==='balloon'){
+    ['🎈','🎀','💜','💙','🩵','🎊','🌟'].forEach((em,i)=>{
+      const b=document.createElement('div'); b.className='balloon-p'; b.textContent=em;
+      b.style.cssText=`left:${10+Math.random()*80}%;bottom:0;--tx:${(Math.random()-.5)*80}px;--dur:${1.8+Math.random()}s;animation-delay:${i*.12}s`;
+      parent.appendChild(b);
+    });
+  } else {
+    const cols=['#ffd54f','#e040fb','#40c4ff','#1de9b6','#ff6b6b','#ffab40','#69f0ae'];
+    for(let i=0;i<22;i++){
+      const c=document.createElement('div'); c.className='confetti-p';
+      c.style.cssText=`left:${10+Math.random()*80}%;top:${Math.random()*80}%;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${(Math.random()-.5)*160}px;--drift:${(Math.random()-.5)*60}px;--dur:${1.5+Math.random()}s;animation-delay:${Math.random()*.4}s`;
+      parent.appendChild(c);
+    }
+  }
+}
+
+/* ══════════════════ GOALS ══════════════════ */
+function totalStarsEarned(){
+  const tasks=getTasks().filter(t=>t.active!==false);
+  let total=0;
+  allDayKeys().forEach(k=>{
+    const d=getDayData(k); total+=d.done.length;
+    if(d.done.length>=tasks.length&&tasks.length>0) total++;
+  });
+  return total;
+}
+function checkGoalProgress(){
+  const total=totalStarsEarned();
+  const goals=getGoals();
+  let updated=false;
+  goals.forEach(g=>{
+    if(!g.claimed&&!g.earnedAt&&total>=g.stars){
+      g.earnedAt=Date.now(); updated=true;
+      setTimeout(()=>showToast(`🎉 Goal unlocked: ${g.name}!`),500);
+    }
+  });
+  if(updated) S.set('goals',goals);
+}
+function openClaim(goalId){
+  const goals=getGoals();
+  const g=goals.find(x=>x.id===goalId); if(!g) return;
+  claimingGoalId=goalId;
+  document.getElementById('claimTitle').textContent=`🎉 ${g.name} Achieved!`;
+  document.getElementById('claimBody').innerHTML=`
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-size:3.5rem;margin-bottom:10px">${g.icon}</div>
+      <p style="font-size:1rem;font-weight:700;margin-bottom:6px">${g.name}</p>
+      <p style="color:var(--dim);font-size:.85rem">Your child earned <strong style="color:var(--gold)">${g.stars} ⭐</strong> and unlocked this reward!</p>
+      <p style="margin-top:12px;font-size:.9rem;color:var(--teal)">Mark as given once you hand it over.</p>
+    </div>`;
+  document.getElementById('claimModal').classList.add('show');
+}
+function closeModal(){ document.getElementById('claimModal').classList.remove('show'); claimingGoalId=null; }
+function confirmClaim(){
+  if(!claimingGoalId) return;
+  const goals=getGoals();
+  const g=goals.find(x=>x.id===claimingGoalId);
+  if(g){ g.claimed=true; g.claimedAt=Date.now(); S.set('goals',goals); }
+  closeModal(); showToast('🎁 Reward marked as given!'); renderRewards();
+}
+
+/* ══════════════════ OVERVIEW ══════════════════ */
+function renderOverview(){
+  const wrap=document.getElementById('tab-overview'); wrap.innerHTML='';
+  const tasks=getTasks().filter(t=>t.active!==false);
+  const data=getDayData(todayKey()); const done=new Set(data.done);
+
+  // Today
+  const c1=document.createElement('div'); c1.className='ov-card';
+  c1.innerHTML='<h3>📅 Today\'s Report</h3>';
+  const ci={Morning:'🌤️',Afternoon:'☀️',Evening:'🌙'};
+  [...new Set(tasks.map(t=>t.cat))].forEach(cat=>{
+    const h=document.createElement('div');
+    h.style.cssText='font-size:.67rem;font-weight:800;color:var(--dim);text-transform:uppercase;margin:10px 0 4px';
+    h.textContent=(ci[cat]||'📌')+' '+cat; c1.appendChild(h);
+    tasks.filter(t=>t.cat===cat).forEach(task=>{
+      const isDone=done.has(task.id);
+      const row=document.createElement('div'); row.className='ov-row';
+      row.innerHTML=`<div class="ov-dot ${isDone?'dd':'md'}"></div><div class="ov-name">${task.icon} ${task.name}</div><div style="font-size:.85rem">${isDone?'⭐':''}</div>`;
+      c1.appendChild(row);
+    });
+  });
+  wrap.appendChild(c1);
+
+  // Weekly
+  const c2=document.createElement('div'); c2.className='ov-card';
+  c2.innerHTML='<h3>📆 This Week</h3><div class="week-grid" id="wkGrid"></div>';
+  wrap.appendChild(c2);
+  const today=new Date(); const dow=today.getDay();
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const wg=c2.querySelector('#wkGrid');
+  for(let i=0;i<7;i++){
+    const d=new Date(today); d.setDate(today.getDate()-dow+i);
+    const k=`day_${d.getFullYear()}_${d.getMonth()+1}_${d.getDate()}`;
+    const dd=getDayData(k); const pct=tasks.length?dd.done.length/tasks.length:0;
+    const isT=(k===todayKey());
+    const cell=document.createElement('div'); cell.className='day-cell';
+    const cls=isT?'today-mark':pct>=1?'full':dd.done.length>0?'partial':'';
+    cell.innerHTML=`<div class="day-lbl">${dayNames[i]}</div><div class="day-circ ${cls}">${pct>=1?'⭐':dd.done.length||''}</div>`;
+    wg.appendChild(cell);
+  }
+
+  // Monthly
+  const now=new Date(); const mp=`day_${now.getFullYear()}_${now.getMonth()+1}_`;
+  let mS=0,mD=0,mF=0;
+  allDayKeys().forEach(k=>{
+    if(!k.startsWith(mp)) return;
+    const d=getDayData(k); mS+=d.done.length; if(d.done.length>0) mD++;
+    if(d.done.length>=tasks.length&&tasks.length>0){mF++;mS++;}
+  });
+  const c3=document.createElement('div'); c3.className='ov-card';
+  c3.innerHTML=`<h3>📈 This Month</h3>
+    <div class="stat-trio">
+      <div class="stat-box"><div class="stat-num" style="color:var(--gold)">${mS}</div><div class="stat-lbl">⭐ Stars</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--blue)">${mD}</div><div class="stat-lbl">Active Days</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--teal)">${mF}</div><div class="stat-lbl">Perfect Days</div></div>
+    </div>`;
+  wrap.appendChild(c3);
+}
+
+/* ══════════════════ REWARDS / GOALS ══════════════════ */
+function renderRewards(){
+  const wrap=document.getElementById('tab-rewards'); wrap.innerHTML='';
+  const p=getProfile(); const tasks=getTasks().filter(t=>t.active!==false);
+  const total=totalStarsEarned(); const goal=p.goal||150;
+  const now=new Date(); const mp=`day_${now.getFullYear()}_${now.getMonth()+1}_`;
+  let mStars=0;
+  allDayKeys().forEach(k=>{
+    if(!k.startsWith(mp)) return;
+    const d=getDayData(k); mStars+=d.done.length;
+    if(d.done.length>=tasks.length&&tasks.length>0) mStars++;
+  });
+
+  // Hero
+  const hero=document.createElement('div'); hero.className='reward-hero';
+  hero.innerHTML=`<div class="ts">⭐ ${total}</div><h2>Total Stars All Time!</h2><p>${p.name} is a Space Champion! Keep it up! 🚀</p>`;
+  wrap.appendChild(hero);
+
+  // Monthly bar
+  const barPct=Math.min(100,Math.round(mStars/goal*100));
+  const bc=document.createElement('div'); bc.className='bar-card';
+  bc.innerHTML=`<div class="bar-labels"><span>⭐ ${mStars} this month</span><span>Goal: ${goal} ⭐</span></div>
+    <div class="bar-track"><div class="bar-fill" id="mBarFill" style="width:0%"></div></div>
+    <div class="bar-sub">${barPct}% to monthly reward</div>`;
+  wrap.appendChild(bc);
+  setTimeout(()=>{ const f=document.getElementById('mBarFill'); if(f) f.style.width=barPct+'%'; },80);
+
+  // Custom Goals
+  const goals=getGoals();
+  if(goals.length>0){
+    const gs=document.createElement('div'); gs.className='goals-section';
+    gs.innerHTML='<h3>🎯 Your Goals & Rewards</h3>';
+    goals.forEach(g=>{
+      const pct=Math.min(100,Math.round(total/g.stars*100));
+      const isEarned=g.earnedAt&&!g.claimed;
+      const isClaimed=g.claimed;
+      const card=document.createElement('div');
+      card.className='goal-reward-card'+(isEarned?' claimable':isClaimed?' achieved':'');
+      const typeTag=g.type==='habit'?'<span class="habit-badge good">🌱 Good Habit</span>':'';
+      card.innerHTML=`
+        <div class="gr-top">
+          <div class="gr-icon">${g.icon}</div>
+          <div><div class="gr-title">${g.name}</div>
+          <div class="gr-desc">${isClaimed?'✅ Reward Given!':isEarned?'🎉 Ready to Claim!':'Earn '+g.stars+' ⭐ to unlock'}</div>
+          ${typeTag}</div>
+        </div>
+        <div class="gr-progress">
+          <div class="gr-bar-track"><div class="gr-bar-fill ${isClaimed||isEarned?'done':'prog'}" style="width:${pct}%"></div></div>
+          <div class="gr-pct">${isClaimed?'✓':total+'/'+g.stars}</div>
+        </div>
+        ${isEarned?`<button class="claim-btn" onclick="openClaim('${g.id}')">🎁 Give This Reward!</button>`:''}`;
+      gs.appendChild(card);
+    });
+    wrap.appendChild(gs);
+  }
+
+  // Milestones
+  const mc=document.createElement('div'); mc.className='milestone-card';
+  mc.innerHTML='<h3>🏅 Achievement Milestones</h3>';
+  MILESTONES.forEach(m=>{
+    const earned=total>=m.stars;
+    const row=document.createElement('div'); row.className='ms-row';
+    row.innerHTML=`<div class="ms-icon">${m.icon}</div>
+      <div class="ms-body"><div class="ms-title">${m.label}</div><div class="ms-sub">${m.reward} · Needs ${m.stars} ⭐</div></div>
+      <div class="ms-badge ${earned?'earned':'locked'}">${earned?'✓ Earned':'🔒 '+(m.stars-total)+' more'}</div>`;
+    mc.appendChild(row);
+  });
+  wrap.appendChild(mc);
+}
+
+/* ══════════════════ ADMIN ══════════════════ */
+function renderAdmin(){
+  const wrap=document.getElementById('tab-admin'); wrap.innerHTML='';
+  const p=getProfile(); const tasks=getTasks(); const goals=getGoals();
+
+  // Profile
+  const pc=document.createElement('div'); pc.className='admin-card';
+  pc.innerHTML=`<h3>👤 Kid Profile</h3>
+    <div class="a-field"><label>Name</label><input id="aName" value="${p.name||''}"/></div>
+    <div class="a-field"><label>Age</label><input id="aAge" type="number" value="${p.age||''}"/></div>
+    <div class="a-field"><label>Monthly Star Goal</label><input id="aGoal" type="number" value="${p.goal||150}"/></div>
+    <div class="a-field"><label>Update Photo / Avatar</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+        <div style="border:1px dashed var(--border);border-radius:10px;padding:10px;text-align:center;cursor:pointer;flex:1" onclick="document.getElementById('aPhoto').click()">
+          <input type="file" id="aPhoto" accept="image/*" style="display:none" onchange="adminPhotoUpdate(this)"/>
+          <div style="color:var(--dim);font-size:.8rem">📸 Change Photo</div>
+        </div>
+      </div>
+      <div class="emoji-row" id="aEmojiRow">
+        ${['👧','👦','🦄','🌟','🐱','🦋','🐼','🌈'].map(e=>`<div class="e-opt" onclick="adminPickEmoji('${e}')" style="width:40px;height:40px;font-size:1.2rem">${e}</div>`).join('')}
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveProfile()">💾 Save Profile</button>`;
+  wrap.appendChild(pc);
+
+  // Reminders
+  const rc=document.createElement('div'); rc.className='admin-card';
+  const reminders=S.get('reminders',{
+    morning:{enabled:true,time:'07:00'},
+    afternoon:{enabled:true,time:'13:00'},
+    evening:{enabled:true,time:'19:00'}
+  });
+  rc.innerHTML=`<h3>🔔 Daily Reminders</h3>
+    <p style="color:var(--dim);font-size:.75rem;margin-bottom:12px">Set times for morning, afternoon, and evening reminders to keep your child on track.</p>
+    ${['morning','afternoon','evening'].map(t=>`
+    <div class="reminder-row">
+      <div style="font-size:1.1rem">${t==='morning'?'🌤️':t==='afternoon'?'☀️':'🌙'}</div>
+      <div class="reminder-label">${t.charAt(0).toUpperCase()+t.slice(1)}</div>
+      <input class="reminder-time" type="time" id="rem_${t}" value="${reminders[t].time}"/>
+      <button class="reminder-tog ${reminders[t].enabled?'on':''}" id="remtog_${t}" onclick="toggleReminder('${t}')"></button>
+    </div>`).join('')}
+    <button class="save-btn" style="margin-top:12px" onclick="saveReminders()">🔔 Save Reminders</button>
+    <p style="color:var(--dim);font-size:.72rem;margin-top:6px">Note: Notifications require the app to be open or added to home screen as a PWA.</p>`;
+  wrap.appendChild(rc);
+
+  // Goals
+  const gc=document.createElement('div'); gc.className='admin-card';
+  gc.innerHTML=`<h3>🎯 Manage Goals</h3>`;
+  goals.forEach((g,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)';
+    row.innerHTML=`<span style="font-size:1.2rem">${g.icon}</span>
+      <span style="flex:1;font-size:.85rem">${g.name} <span style="color:var(--gold)">(${g.stars}⭐)</span></span>
+      <span style="font-size:.75rem;color:${g.claimed?'var(--teal)':g.earnedAt?'var(--gold)':'var(--dim)'}">
+        ${g.claimed?'✅ Given':g.earnedAt?'🎉 Earned':'🔒 In progress'}</span>
+      <button onclick="removeGoal('${g.id}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:.9rem">✕</button>`;
+    gc.appendChild(row);
+  });
+  // Add new goal inline
+  gc.innerHTML+=`<div style="margin-top:12px">
+    <div class="a-field"><label>New Goal Name</label><input id="newGName" placeholder="e.g. Buy Chocolate"/></div>
+    <div style="display:flex;gap:8px">
+      <div class="a-field" style="flex:1;margin-bottom:0"><label>Icon</label><input id="newGIcon" placeholder="🎯" maxlength="2" value="🎯" style="text-align:center"/></div>
+      <div class="a-field" style="flex:1;margin-bottom:0"><label>Stars Needed</label><input id="newGStars" type="number" min="5" value="60"/></div>
+    </div>
+    <button class="save-btn" style="margin-top:10px" onclick="addAdminGoal()">➕ Add Goal</button>
+  </div>`;
+  wrap.appendChild(gc);
+
+  // Tasks
+  const tc=document.createElement('div'); tc.className='admin-card';
+  tc.innerHTML='<h3>✅ Enable / Disable Tasks</h3>';
+  tasks.forEach(t=>{
+    const row=document.createElement('div'); row.className='tog-row';
+    row.innerHTML=`<div class="tog-ico">${t.icon}</div><div class="tog-nm">${t.name}</div>
+      <button class="tog ${t.active===false?'':'on'}" id="tog_${t.id}" onclick="toggleTaskActive('${t.id}')"></button>`;
+    tc.appendChild(row);
+  });
+  wrap.appendChild(tc);
+
+  // Custom task
+  const ac=document.createElement('div'); ac.className='admin-card';
+  ac.innerHTML=`<h3>➕ Add Custom Task</h3>
+    <div class="a-field"><label>Task Name</label><input id="ntName" placeholder="e.g. Read a Book"/></div>
+    <div style="display:flex;gap:8px">
+      <div class="a-field" style="flex:1;margin-bottom:0"><label>Emoji</label><input id="ntIcon" value="📌" maxlength="2" style="text-align:center"/></div>
+      <div class="a-field" style="flex:1;margin-bottom:0"><label>Category</label>
+        <select id="ntCat"><option>Morning</option><option selected>Afternoon</option><option>Evening</option></select>
+      </div>
+    </div>
+    <button class="save-btn" style="margin-top:10px" onclick="addTask()">➕ Add Task</button>`;
+  wrap.appendChild(ac);
+
+  // PIN
+  const pinc=document.createElement('div'); pinc.className='admin-card';
+  pinc.innerHTML=`<h3>🔐 Change PIN</h3>
+    <div class="a-field"><label>New PIN</label><input id="aPin" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN"/></div>
+    <div class="a-field"><label>Confirm</label><input id="aPin2" type="password" inputmode="numeric" maxlength="6" placeholder="Repeat PIN"/></div>
+    <button class="save-btn" onclick="changePIN()">🔐 Update PIN</button>`;
+  wrap.appendChild(pinc);
+
+  // Danger
+  const dc=document.createElement('div'); dc.className='admin-card';
+  dc.innerHTML=`<h3>⚠️ Data Management</h3>
+    <button class="danger-btn" onclick="resetToday()">🔄 Reset Today's Progress</button>
+    <button class="danger-btn" onclick="clearAll()">🗑️ Factory Reset</button>`;
+  wrap.appendChild(dc);
+}
+
+function adminPhotoUpdate(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const p=getProfile(); p.avatar=e.target.result; S.set('profile',p);
+    document.getElementById('appAv').innerHTML=`<img src="${e.target.result}" alt=""/>`;
+    showToast('📸 Photo updated!');
+  };
+  reader.readAsDataURL(file);
+}
+function adminPickEmoji(emoji){
+  const p=getProfile(); p.avatar=emoji; S.set('profile',p);
+  document.getElementById('appAv').textContent=emoji;
+  document.querySelectorAll('#aEmojiRow .e-opt').forEach(el=>el.classList.remove('sel'));
+  showToast('Avatar updated!');
+}
+function saveProfile(){
+  const p=getProfile();
+  p.name=document.getElementById('aName').value.trim()||p.name;
+  p.age=document.getElementById('aAge').value.trim();
+  p.goal=parseInt(document.getElementById('aGoal').value)||p.goal;
+  S.set('profile',p);
+  document.getElementById('appName').textContent=p.name+' 🌟';
+  showToast('✅ Profile saved!');
+}
+function toggleReminder(type){
+  const btn=document.getElementById('remtog_'+type);
+  btn.classList.toggle('on');
+}
+function saveReminders(){
+  const r={};
+  ['morning','afternoon','evening'].forEach(t=>{
+    r[t]={
+      enabled:document.getElementById('remtog_'+t).classList.contains('on'),
+      time:document.getElementById('rem_'+t).value
+    };
+  });
+  S.set('reminders',r);
+  scheduleReminders();
+  showToast('🔔 Reminders saved!');
+}
+function scheduleReminders(){
+  if(!('Notification' in window)) return;
+  const r=S.get('reminders',{
+    morning:{enabled:true,time:'07:00'},
+    afternoon:{enabled:true,time:'13:00'},
+    evening:{enabled:true,time:'19:00'}
+  });
+  // Request permission
+  if(Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+  // Clear existing
+  if(window._reminderTimers) window._reminderTimers.forEach(clearTimeout);
+  window._reminderTimers=[];
+  if(Notification.permission!=='granted') return;
+  const msgs={
+    morning:'🌤️ Good morning! Time to start your daily missions!',
+    afternoon:'☀️ Afternoon check-in! How are your tasks going?',
+    evening:'🌙 Evening reminder! Don\'t forget your evening missions!'
+  };
+  Object.entries(r).forEach(([slot,cfg])=>{
+    if(!cfg.enabled) return;
+    const [h,m]=cfg.time.split(':').map(Number);
+    const now=new Date(); const fire=new Date();
+    fire.setHours(h,m,0,0);
+    if(fire<=now) fire.setDate(fire.getDate()+1);
+    const diff=fire-now;
+    const t=setTimeout(()=>{
+      new Notification('⭐ Kids Activity Tracker',{body:msgs[slot],icon:'./icon-192.png'});
+    },diff);
+    window._reminderTimers.push(t);
+  });
+}
+function addAdminGoal(){
+  const name=document.getElementById('newGName').value.trim();
+  const icon=document.getElementById('newGIcon').value.trim()||'🎯';
+  const stars=parseInt(document.getElementById('newGStars').value)||60;
+  if(!name){showToast('Enter a goal name');return;}
+  const goals=getGoals();
+  goals.push({id:'goal_'+Date.now(),icon,name,stars,type:'goal',claimed:false,earnedAt:null});
+  S.set('goals',goals); showToast('✅ Goal added!'); renderAdmin();
+}
+function removeGoal(id){
+  if(!confirm('Remove this goal?')) return;
+  const goals=getGoals().filter(g=>g.id!==id);
+  S.set('goals',goals); showToast('Goal removed'); renderAdmin();
+}
+function toggleTaskActive(id){
+  const tasks=getTasks(); const t=tasks.find(x=>x.id===id);
+  if(t) t.active=(t.active===false)?true:false;
+  S.set('tasks',tasks);
+  const btn=document.getElementById('tog_'+id);
+  if(btn) btn.classList.toggle('on',t.active!==false);
+  showToast(t.active!==false?'✅ Task enabled':'Task disabled');
+}
+function addTask(){
+  const name=document.getElementById('ntName').value.trim();
+  const icon=document.getElementById('ntIcon').value.trim()||'📌';
+  const cat=document.getElementById('ntCat').value;
+  if(!name){showToast('Enter a task name');return;}
+  const tasks=getTasks();
+  tasks.push({id:'c_'+Date.now(),name,icon,cat,active:true});
+  S.set('tasks',tasks); showToast('✅ Task added!'); renderAdmin();
+}
+function changePIN(){
+  const p=document.getElementById('aPin').value;
+  const p2=document.getElementById('aPin2').value;
+  if(p.length<4){showToast('❌ PIN too short');return;}
+  if(p!==p2){showToast('❌ PINs do not match');return;}
+  S.set('adminPin',p); showToast('🔐 PIN updated!');
+}
+function resetToday(){
+  if(!confirm("Reset today's progress?")) return;
+  S.set(todayKey(),{done:[]}); showToast('🔄 Reset!');
+  switchTab('today',document.getElementById('tb-today'));
+}
+function clearAll(){
+  if(!confirm('Delete ALL data? Cannot be undone.')) return;
+  localStorage.clear(); showToast('🗑️ Cleared');
+  setTimeout(()=>location.reload(),1200);
+}
+
+/* ══ Toast ══ */
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
