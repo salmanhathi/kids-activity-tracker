@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "com.kidsactivitytracker.app",
-    "sha256_cert_fingerprints": ["GET_THIS_BELOW"]
+    "sha256_cert_fingerprints": ["17:59:4B:97:16:82:11:EA:13:8C:E6:20:B0:26:76:AE:7E:A8:45:B8:15:EF:8B:E1:40:D6:EB:8B:44:2A:C8:25"]
   }
 }]
