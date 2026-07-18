@@ -1,6 +1,6 @@
 {
   "name": "Kids Activity Tracker",
-  "short_name": "Kids Activity Tracker",
+  "short_name": "KidsTracker",
   "description": "Help your child build great daily habits with stars, goals and rewards!",
   "start_url": "./index.html",
   "display": "standalone",
