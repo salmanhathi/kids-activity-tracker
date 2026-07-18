@@ -30,19 +30,18 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Configure Bubblewrap to skip JDK install
+      - name: Pre-create build directory
+        run: mkdir -p twa-build
+
+      - name: Configure Bubblewrap JDK/SDK paths
         run: |
           mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json << 'BWCONFIG'
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ANDROID_SDK_ROOT"
-          }
-          BWCONFIG
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
 
       - name: Init Bubblewrap (non-interactive)
         run: |
-          echo -e "n\n" | bubblewrap init \
+          yes "" | bubblewrap init \
             --manifest "https://${{ github.repository_owner }}.github.io/kids-activity-tracker/manifest.json" \
             --directory twa-build
         env:
@@ -74,14 +73,16 @@ jobs:
         env:
           BUBBLEWRAP_SKIP_JAVA_CHECK: "1"
 
+      - name: List build output
+        run: find twa-build -name "*.apk" -o -name "*.aab" 2>/dev/null
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: kids-activity-tracker-apk
           path: |
-            twa-build/app-release-signed.apk
-            twa-build/app-release.apk
-            twa-build/*.aab
+            twa-build/**/*.apk
+            twa-build/**/*.aab
           retention-days: 30
 
       - name: Create GitHub Release
@@ -90,8 +91,7 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: Kids Activity Tracker v1.0.${{ github.run_number }}
           files: |
-            twa-build/app-release-signed.apk
-            twa-build/app-release.apk
-            twa-build/*.aab
+            twa-build/**/*.apk
+            twa-build/**/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
