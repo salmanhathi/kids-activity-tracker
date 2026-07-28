@@ -39,7 +39,17 @@ jobs:
           mkdir -p twa-app/app/src/main/res/mipmap-xxhdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xxxhdpi
           mkdir -p twa-app/app/src/main/res/values
+          mkdir -p twa-app/app/src/main/res/xml
           mkdir -p twa-app/gradle/wrapper
+
+      - name: Restore keystore from secret
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
+          echo "Keystore restored successfully"
+          keytool -list -v \
+            -keystore android.keystore \
+            -alias kidsactivity \
+            -storepass kidsapp2024 | grep SHA256
 
       - name: Download app icon
         run: |
@@ -150,9 +160,13 @@ jobs:
                   android:label="Kids Activity Tracker"
                   android:theme="@android:style/Theme.NoTitleBar"
                   android:supportsRtl="true">
+                  <meta-data
+                      android:name="asset_statements"
+                      android:value='[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://salmanhathi.github.io"}}]'/>
                   <activity
                       android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-                      android:exported="true">
+                      android:exported="true"
+                      android:screenOrientation="portrait">
                       <meta-data
                           android:name="android.support.customtabs.trusted.DEFAULT_URL"
                           android:value="https://salmanhathi.github.io/kids-activity-tracker/index.html"/>
@@ -168,6 +182,9 @@ jobs:
                       <meta-data
                           android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY"
                           android:value="com.kidsactivitytracker.app.fileprovider"/>
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
+                          android:value="customtabs"/>
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
@@ -181,8 +198,26 @@ jobs:
                                 android:pathPrefix="/kids-activity-tracker"/>
                       </intent-filter>
                   </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="com.kidsactivitytracker.app.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/filepaths"/>
+                  </provider>
               </application>
           </manifest>
+          XML
+
+      - name: Write filepaths.xml
+        run: |
+          cat > twa-app/app/src/main/res/xml/filepaths.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths>
+              <external-path name="external_files" path="."/>
+          </paths>
           XML
 
       - name: Write strings.xml
@@ -197,19 +232,6 @@ jobs:
       - name: Install Gradle wrapper
         working-directory: twa-app
         run: gradle wrapper --gradle-version=8.4
-
-      - name: Generate signing keystore
-        run: |
-          keytool -genkeypair \
-            -v \
-            -keystore android.keystore \
-            -alias kidsactivity \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass kidsapp2024 \
-            -keypass kidsapp2024 \
-            -dname "CN=Kids Activity Tracker, OU=App, O=KidsApp, L=Dubai, S=Dubai, C=AE"
 
       - name: Build release APK
         working-directory: twa-app
