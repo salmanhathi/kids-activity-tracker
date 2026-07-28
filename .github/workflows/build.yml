@@ -31,25 +31,17 @@ jobs:
       - name: Install Android build tools
         run: sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
 
-      - name: Create project directories
+      - name: Create project structure
         run: |
+          mkdir -p twa-app/app/src/main/java/com/kidsactivitytracker/app
           mkdir -p twa-app/app/src/main/res/mipmap-mdpi
           mkdir -p twa-app/app/src/main/res/mipmap-hdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xhdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xxhdpi
           mkdir -p twa-app/app/src/main/res/mipmap-xxxhdpi
+          mkdir -p twa-app/app/src/main/res/layout
           mkdir -p twa-app/app/src/main/res/values
-          mkdir -p twa-app/app/src/main/res/xml
           mkdir -p twa-app/gradle/wrapper
-
-      - name: Restore keystore from secret
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
-          echo "Keystore restored successfully"
-          keytool -list -v \
-            -keystore android.keystore \
-            -alias kidsactivity \
-            -storepass kidsapp2024 | grep SHA256
 
       - name: Download app icon
         run: |
@@ -58,6 +50,126 @@ jobs:
             cp icon.png twa-app/app/src/main/res/mipmap-$size/ic_launcher.png
             cp icon.png twa-app/app/src/main/res/mipmap-$size/ic_launcher_round.png
           done
+
+      - name: Write MainActivity.java
+        run: |
+          cat > twa-app/app/src/main/java/com/kidsactivitytracker/app/MainActivity.java << 'JAVA'
+          package com.kidsactivitytracker.app;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebSettings;
+          import android.webkit.WebChromeClient;
+          import android.webkit.PermissionRequest;
+          import android.view.KeyEvent;
+          import android.graphics.Color;
+
+          public class MainActivity extends Activity {
+              private WebView webView;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  webView = new WebView(this);
+                  setContentView(webView);
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setAllowContentAccess(true);
+                  settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+                  settings.setMediaPlaybackRequiresUserGesture(false);
+                  settings.setLoadWithOverviewMode(true);
+                  settings.setUseWideViewPort(true);
+
+                  webView.setBackgroundColor(Color.parseColor("#060618"));
+
+                  webView.setWebChromeClient(new WebChromeClient() {
+                      @Override
+                      public void onPermissionRequest(PermissionRequest request) {
+                          request.grant(request.getResources());
+                      }
+                  });
+
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                          view.loadUrl(url);
+                          return true;
+                      }
+                  });
+
+                  webView.loadUrl("https://salmanhathi.github.io/kids-activity-tracker/index.html");
+              }
+
+              @Override
+              public boolean onKeyDown(int keyCode, KeyEvent event) {
+                  if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+                      webView.goBack();
+                      return true;
+                  }
+                  return super.onKeyDown(keyCode, event);
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  webView.onResume();
+              }
+
+              @Override
+              protected void onPause() {
+                  super.onPause();
+                  webView.onPause();
+              }
+          }
+          JAVA
+
+      - name: Write AndroidManifest.xml
+        run: |
+          cat > twa-app/app/src/main/AndroidManifest.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+              <uses-permission android:name="android.permission.CAMERA"/>
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:label="Kids Activity Tracker"
+                  android:usesCleartextTraffic="false"
+                  android:supportsRtl="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:screenOrientation="portrait"
+                      android:configChanges="orientation|screenSize|keyboardHidden"
+                      android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          XML
+
+      - name: Write strings.xml
+        run: |
+          cat > twa-app/app/src/main/res/values/strings.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Kids Activity Tracker</string>
+          </resources>
+          XML
 
       - name: Write gradle-wrapper.properties
         run: |
@@ -140,98 +252,15 @@ jobs:
                   targetCompatibility JavaVersion.VERSION_1_8
               }
           }
-          dependencies {
-              implementation 'androidx.browser:browser:1.7.0'
-              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-          }
+          dependencies {}
           GRADLE
-
-      - name: Write AndroidManifest.xml
-        run: |
-          cat > twa-app/app/src/main/AndroidManifest.xml << 'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-              <application
-                  android:allowBackup="true"
-                  android:icon="@mipmap/ic_launcher"
-                  android:roundIcon="@mipmap/ic_launcher_round"
-                  android:label="Kids Activity Tracker"
-                  android:theme="@android:style/Theme.NoTitleBar"
-                  android:supportsRtl="true">
-                  <meta-data
-                      android:name="asset_statements"
-                      android:value='[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://salmanhathi.github.io"}}]'/>
-                  <activity
-                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-                      android:exported="true"
-                      android:screenOrientation="portrait">
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                          android:value="https://salmanhathi.github.io/kids-activity-tracker/index.html"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
-                          android:value="#0d0d2b"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
-                          android:value="#060618"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
-                          android:value="300"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY"
-                          android:value="com.kidsactivitytracker.app.fileprovider"/>
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
-                          android:value="customtabs"/>
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                      <intent-filter android:autoVerify="true">
-                          <action android:name="android.intent.action.VIEW"/>
-                          <category android:name="android.intent.category.DEFAULT"/>
-                          <category android:name="android.intent.category.BROWSABLE"/>
-                          <data android:scheme="https"
-                                android:host="salmanhathi.github.io"
-                                android:pathPrefix="/kids-activity-tracker"/>
-                      </intent-filter>
-                  </activity>
-                  <provider
-                      android:name="androidx.core.content.FileProvider"
-                      android:authorities="com.kidsactivitytracker.app.fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/filepaths"/>
-                  </provider>
-              </application>
-          </manifest>
-          XML
-
-      - name: Write filepaths.xml
-        run: |
-          cat > twa-app/app/src/main/res/xml/filepaths.xml << 'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <paths>
-              <external-path name="external_files" path="."/>
-          </paths>
-          XML
-
-      - name: Write strings.xml
-        run: |
-          cat > twa-app/app/src/main/res/values/strings.xml << 'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="app_name">Kids Activity Tracker</string>
-          </resources>
-          XML
 
       - name: Install Gradle wrapper
         working-directory: twa-app
         run: gradle wrapper --gradle-version=8.4
+
+      - name: Restore keystore from secret
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android.keystore
 
       - name: Build release APK
         working-directory: twa-app
